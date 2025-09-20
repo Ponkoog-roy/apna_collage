@@ -1,25 +1,119 @@
+/* Body and background */
 body {
     text-align: center;
-}
-#formBtn {
-    color: white;
-    background-color:coral;
-    border: none;
-    border-radius: 2px;
-    padding: 0.25rem 1rem;
-    margin-top: 1rem;
-    cursor: pointer;
-    font-size: 1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+
+    /* University background image */
+    background-image: url('university.jpg'); /* Replace with your image path */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    /* Dark overlay to make form readable */
+    position: relative;
 }
 
-form {
-    border: 2px solid grey;
-    display: inline-block;
-    padding: 2rem;
-    border-radius: 0.5rem;
+body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5); /* semi-transparent dark overlay */
+    z-index: 0;
+}
+
+/* Card container */
+.card {
+    position: relative;
+    z-index: 1; /* ensures it stays above overlay */
+    background: rgba(255, 255, 255, 0.95); /* slightly transparent white */
+    padding: 2.5rem 2rem;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Heading and paragraph */
+h1 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+p {
+    color: #555;
+    margin-bottom: 25px;
+}
+
+/* Form fields */
+.field {
+    margin-bottom: 1rem;
     text-align: left;
 }
 
-.field {
-    margin-bottom: 0.5rem;
+label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: bold;
+    color: #333;
+}
+
+input {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input:focus {
+    border-color: coral;
+    box-shadow: 0 0 5px rgba(255, 127, 80, 0.5);
+    outline: none;
+}
+
+/* Button */
+#formBtn {
+    color: white;
+    background-color: coral;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1.5rem;
+    margin-top: 1rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#formBtn:hover {
+    background-color: #ff7f50;
+    transform: translateY(-2px);
+}
+
+/* Error messages */
+.error {
+    color: red;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+    .card {
+        padding: 2rem 1.5rem;
+    }
 }

@@ -1,42 +1,49 @@
 const express = require("express");
 const app = express();
-const path = require("path");
 const MongoClient = require("mongodb").MongoClient;
 
-const PORT = 5050;
+const PORT = process.env.PORT || 5000;
+const MONGO_URL = "mongodb://admin:password@mongo:27017"; // docker service name 'mongo'
+
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(express.static("public"));
 
-const MONGO_URL = "mongodb://admin:qwerty@localhost:27017";
 const client = new MongoClient(MONGO_URL);
 
-//GET all users
+async function connectDB() {
+    if (!client.isConnected?.()) {
+        await client.connect();
+        console.log("Connected to MongoDB");
+    }
+    return client.db("apnacollege-db");
+}
+
+// GET all users
 app.get("/getUsers", async (req, res) => {
-    await client.connect(URL);
-    console.log('Connected successfully to server');
-
-    const db = client.db("apnacollege-db");
-    const data = await db.collection('users').find({}).toArray();
-    
-    client.close();
-    res.send(data);
+    try {
+        const db = await connectDB();
+        const data = await db.collection("users").find({}).toArray();
+        res.send(data);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("DB Error");
+    }
 });
 
-//POST new user
+// POST new user
 app.post("/addUser", async (req, res) => {
-    const userObj = req.body;
-    console.log(req.body);
-    await client.connect(URL);
-    console.log('Connected successfully to server');
-
-    const db = client.db("apnacollege-db");
-    const data = await db.collection('users').insertOne(userObj);
-    console.log(data);
-    console.log("data inserted in DB");
-    client.close();
+    try {
+        const db = await connectDB();
+        const result = await db.collection("users").insertOne(req.body);
+        res.send(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("DB Error");
+    }
 });
 
-
-app.listen(PORT, () => {
-    console.log(`server running on port ${PORT}`);
+// Listen on 0.0.0.0 so Docker exposes the port
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on port ${PORT}`);
 });
