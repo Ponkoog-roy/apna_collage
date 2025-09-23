@@ -7,7 +7,6 @@ on:
       - dev
       - main
     paths-ignore:          # ✅ corrected
-      - '.github/workflows/**'
       - 'docs/**'
       - 'README.md'
       - 'LICENSE'
