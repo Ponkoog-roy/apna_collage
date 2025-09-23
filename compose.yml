@@ -5,9 +5,6 @@ services:
     image: mongo:6.0
     container_name: mongodb
     restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
     ports:
       - "27017:27017"
     volumes:
@@ -17,10 +14,6 @@ services:
     image: mongo-express:1.0
     container_name: mongo_express
     restart: always
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
-      ME_CONFIG_MONGODB_ADMINPASSWORD: password
-      ME_CONFIG_MONGODB_SERVER: mongo
     ports:
       - "8081:8081"
     depends_on:
