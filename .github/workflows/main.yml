@@ -35,11 +35,14 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
       - name: install dependencies 
+        if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
       - name: run tests
         run: npm test
 
   Deploy:
+    needs: test
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -53,4 +56,6 @@ jobs:
       - name: install dependencies 
         run: npm ci
       - name: run tests
-        run: npm test
+        continue-on-error: true
+        run: npm dev
+
