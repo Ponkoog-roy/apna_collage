@@ -1,0 +1,19 @@
+name: git action
+on:
+  workflow_dispatch
+  push:
+    branches:
+      - dev
+      - main
+  path_ignore:
+Jobs:
+  test:
+  runs-on: ubuntu-latest
+  steps:
+    - name:
+      uses:
+
+  Deploy:
+  runs-on: ubuntu-latest
+  steps:
+   
