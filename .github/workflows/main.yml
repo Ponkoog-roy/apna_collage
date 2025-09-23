@@ -42,7 +42,6 @@ jobs:
 
   Deploy:
     needs: test
-    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
