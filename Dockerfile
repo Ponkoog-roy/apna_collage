@@ -1,20 +1,20 @@
 # Use official Node.js 18 image
 FROM node:18
 
-# Set working directory inside the container
+# Set working directory
 WORKDIR /testapp
 
-# Copy package.json and package-lock.json and install dependencies
+# Copy package.json and install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy the rest of the application code
+# Copy the rest of the app code
 COPY . .
 
-# Set environment variable for the app port
+# Set environment variable
 ENV PORT=5000
 
-# Expose the port the app will run on
+# Expose app port
 EXPOSE 5000
 
 # Command to run the app
