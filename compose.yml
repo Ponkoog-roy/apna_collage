@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   mongo:
     image: mongo:6.0
@@ -21,10 +23,6 @@ services:
       ME_CONFIG_MONGODB_SERVER: mongo
     ports:
       - "8081:8081"
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
-      ME_CONFIG_MONGODB_ADMINPASSWORD: password
-      ME_CONFIG_MONGODB_SERVER: mongo
     depends_on:
       - mongo
 
@@ -38,10 +36,7 @@ services:
       PORT: 5000
       MONGO_URL: mongodb://admin:password@mongo:27017/?authSource=admin
     volumes:
-<<<<<<< HEAD
       - ./node_modules:/testapp/node_modules
-=======
->>>>>>> 76e58195125906732d2f64ab1cbe6932b091a743
       - .:/testapp
     depends_on:
       - mongo
