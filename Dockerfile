@@ -1,21 +1,37 @@
-# Use official Node.js 18 image
-FROM node:18
+# ===========================
+# Stage 1: Build
+# ===========================
+FROM node:18-alpine AS build
 
 # Set working directory
-WORKDIR /testapp
+WORKDIR /app
 
-# Copy package.json and install dependencies
+# Copy package.json and package-lock.json
 COPY package*.json ./
-RUN npm install
 
-# Copy the rest of the app code
+# Install dependencies (only production)
+RUN npm ci --only=production
+
+# Copy app source code
 COPY . .
 
-# Set environment variable
-ENV PORT=5000
+# ===========================
+# Stage 2: Run
+# ===========================
+FROM node:18-alpine
 
-# Expose app port
+# Set working directory
+WORKDIR /app
+
+# Copy only necessary files from build stage
+COPY --from=build /app /app
+
+# Expose the port your app listens on
 EXPOSE 5000
+
+# Start the app
+CMD ["node", "server.js"]
+
 
 # Command to run the app
 CMD ["node", "server.js"]
