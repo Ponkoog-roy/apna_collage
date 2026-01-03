@@ -29,9 +29,5 @@ COPY --from=build /app /app
 # Expose the port your app listens on
 EXPOSE 5000
 
-# Start the app
-CMD ["node", "server.js"]
-
-
 # Command to run the app
 CMD ["node", "server.js"]
