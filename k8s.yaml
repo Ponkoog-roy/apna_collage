@@ -22,7 +22,7 @@ kind: Deployment
 metadata:
   name: mongo-deployment
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: mongo
@@ -57,7 +57,6 @@ spec:
     app: mongo
   ports:
     - port: 27017
-  clusterIP: None
 
 # ======== 🌐 Mongo Express Deployment & Service ========
 ---
@@ -66,7 +65,7 @@ kind: Deployment
 metadata:
   name: mongo-express-deployment
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: mongo-express
@@ -117,7 +116,7 @@ kind: Deployment
 metadata:
   name: node-app-deployment
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: node-app
@@ -128,8 +127,8 @@ spec:
     spec:
       containers:
         - name: node-app
-          image: docker-testapp-main-app:latest
-          imagePullPolicy: Never
+          image: ponkoog/myapp3.1
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
           env:
