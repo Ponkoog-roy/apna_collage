@@ -1,0 +1,38 @@
+﻿# =========================== KEY CHANGES SUMMARY ===========================
+
+## 1. ConfigMap Update
+OLD: database_url: mongo-service
+NEW: database_url: mongo-0.mongo-service
+WHY: Headless service requires specific pod hostname
+
+## 2. Node App Connection String
+OLD: mongodb://admin:password@mongo-service:27017
+NEW: mongodb://admin:password@mongo-0.mongo-service:27017,mongo-1.mongo-service:27017/?retryWrites=true&w=1
+WHY: 
+  - Headless service doesn't provide a single endpoint
+  - Multiple hosts provide high availability
+  - Automatic failover if one pod fails
+
+## 3. Added Resource Limits
+NEW: Added requests/limits for all containers
+WHY: 
+  - Prevents resource starvation
+  - Better pod scheduling
+  - Production best practice
+
+## 4. Enhanced Probes
+NEW: Added timeoutSeconds and failureThreshold
+WHY: More reliable health checking
+
+## 5. Removed Unused PVC
+REMOVED: mongo-pvc (was defined but never used)
+WHY: StatefulSet uses volumeClaimTemplates instead
+
+## 6. Added MongoDB Health Checks
+NEW: liveness and readiness probes for MongoDB
+WHY: Kubernetes can detect and restart unhealthy mongo pods
+
+## 7. Added Basic Auth for Mongo Express
+NEW: ME_CONFIG_BASICAUTH_USERNAME and PASSWORD
+WHY: Secure the web UI (default: admin/pass)
+

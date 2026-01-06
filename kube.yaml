@@ -1,0 +1,271 @@
+﻿# =========================== 🔐 Secrets & ConfigMaps ===========================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongo-secret
+type: Opaque
+data:
+  mongo-user: YWRtaW4=         # "admin"
+  mongo-password: cGFzc3dvcmQ= # "password"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-config
+data:
+  # For StatefulSet with headless service, use pod-0 hostname
+  database_url: mongo-0.mongo-service
+
+# =========================== 🟢 MongoDB StatefulSet & Service ===========================
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+spec:
+  serviceName: mongo-service
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:6.0
+          ports:
+            - containerPort: 27017
+              name: mongodb
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: mongo-user
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: mongo-password
+          volumeMounts:
+            - name: mongo-storage
+              mountPath: /data/db
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            exec:
+              command:
+                - mongo
+                - --eval
+                - "db.adminCommand('ping')"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - mongo
+                - --eval
+                - "db.adminCommand('ping')"
+            initialDelaySeconds: 10
+            periodSeconds: 5
+  volumeClaimTemplates:
+    - metadata:
+        name: mongo-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-service
+spec:
+  selector:
+    app: mongo
+  ports:
+    - port: 27017
+      targetPort: 27017
+      name: mongodb
+  clusterIP: None   # Headless service for StatefulSet
+
+# =========================== 🌐 Mongo Express Deployment & Service ===========================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-express
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mongo-express
+  template:
+    metadata:
+      labels:
+        app: mongo-express
+    spec:
+      containers:
+        - name: mongo-express
+          image: mongo-express:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: ME_CONFIG_MONGODB_ADMINUSERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: mongo-user
+            - name: ME_CONFIG_MONGODB_ADMINPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: mongo-password
+            # Use the StatefulSet pod hostname directly
+            - name: ME_CONFIG_MONGODB_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: mongo-config
+                  key: database_url
+            - name: ME_CONFIG_BASICAUTH_USERNAME
+              value: "admin"
+            - name: ME_CONFIG_BASICAUTH_PASSWORD
+              value: "pass"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-express-service
+spec:
+  type: NodePort
+  selector:
+    app: mongo-express
+  ports:
+    - port: 8081
+      targetPort: 8081
+      nodePort: 32000
+
+# =========================== 🚀 Node.js App Deployment & Service ===========================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: node-app
+  template:
+    metadata:
+      labels:
+        app: node-app
+    spec:
+      containers:
+        - name: node-app
+          image: ponkoog/myapp3.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: PORT
+              value: "5000"
+            # Connect to StatefulSet pods directly for high availability
+            - name: MONGO_URL
+              value: "mongodb://admin:password@mongo-0.mongo-service:27017,mongo-1.mongo-service:27017/?retryWrites=true&w=1"
+          readinessProbe:
+            httpGet:
+              path: /getUsers
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /getUsers
+              port: 5000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-app-service
+spec:
+  type: NodePort
+  selector:
+    app: node-app
+  ports:
+    - port: 5000
+      targetPort: 5000
+      nodePort: 31000
+
+# =========================== 🌐 Optional: Ingress for Production ===========================
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: myapp.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: node-app-service
+                port:
+                  number: 5000
+          - path: /mongo-express
+            pathType: Prefix
+            backend:
+              service:
+                name: mongo-express-service
+                port:
+                  number: 8081
