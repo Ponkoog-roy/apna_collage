@@ -1,4 +1,4 @@
-# =========================== 🔐 Secrets & ConfigMaps ===========================
+﻿# =========================== 🔐 Secrets & ConfigMaps ===========================
 apiVersion: v1
 kind: Secret
 metadata:
@@ -13,20 +13,12 @@ kind: ConfigMap
 metadata:
   name: mongo-config
 data:
-  database_url: mongo-service
+  # Mongo Express needs a single host connection
+  mongo_express_url: mongodb://admin:password@mongo-0.mongo-service:27017
+  # Node app can use multiple hosts for HA
+  node_app_url: mongodb://admin:password@mongo-0.mongo-service:27017,mongo-1.mongo-service:27017/?retryWrites=true&w=1
 
-# =========================== 🟢 MongoDB StatefulSet & PersistentVolume ===========================
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mongo-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 2Gi
+# =========================== 🟢 MongoDB StatefulSet & Service ===========================
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -48,6 +40,7 @@ spec:
           image: mongo:6.0
           ports:
             - containerPort: 27017
+              name: mongodb
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
               valueFrom:
@@ -62,6 +55,34 @@ spec:
           volumeMounts:
             - name: mongo-storage
               mountPath: /data/db
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          # Use mongosh (MongoDB Shell) for health checks in mongo:6.0+
+          livenessProbe:
+            exec:
+              command:
+                - mongosh
+                - --eval
+                - "db.adminCommand('ping')"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - mongosh
+                - --eval
+                - "db.adminCommand('ping')"
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
   volumeClaimTemplates:
     - metadata:
         name: mongo-storage
@@ -81,7 +102,8 @@ spec:
   ports:
     - port: 27017
       targetPort: 27017
-  clusterIP: None   # Required for StatefulSet headless service
+      name: mongodb
+  clusterIP: None   # Headless service for StatefulSet
 
 # =========================== 🌐 Mongo Express Deployment & Service ===========================
 ---
@@ -115,23 +137,39 @@ spec:
                 secretKeyRef:
                   name: mongo-secret
                   key: mongo-password
-            - name: ME_CONFIG_MONGODB_SERVER
+            # Mongo Express needs a single host connection
+            - name: ME_CONFIG_MONGODB_URL
               valueFrom:
                 configMapKeyRef:
                   name: mongo-config
-                  key: database_url
+                  key: mongo_express_url
+            - name: ME_CONFIG_BASICAUTH_USERNAME
+              value: "admin"
+            - name: ME_CONFIG_BASICAUTH_PASSWORD
+              value: "pass"
           readinessProbe:
             httpGet:
               path: /
               port: 8081
-            initialDelaySeconds: 10
+            initialDelaySeconds: 15
             periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
           livenessProbe:
             httpGet:
               path: /
               port: 8081
             initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
 ---
 apiVersion: v1
 kind: Service
@@ -171,20 +209,35 @@ spec:
           env:
             - name: PORT
               value: "5000"
+            # Use ConfigMap for connection URL
             - name: MONGO_URL
-              value: mongodb://admin:password@mongo-service:27017
+              valueFrom:
+                configMapKeyRef:
+                  name: mongo-config
+                  key: node_app_url
           readinessProbe:
             httpGet:
               path: /getUsers
               port: 5000
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
           livenessProbe:
             httpGet:
               path: /getUsers
               port: 5000
-            initialDelaySeconds: 15
+            initialDelaySeconds: 20
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
 ---
 apiVersion: v1
 kind: Service
