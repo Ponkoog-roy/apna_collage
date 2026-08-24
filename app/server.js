@@ -72,8 +72,16 @@ app.post("/addUser", async (req, res) => {
 });
 
 /**
+ * Health Check Endpoint
+ */
+app.get("/health", (req, res) => {
+    res.status(200).json({
+        status: "UP"
+    });
+});
+
+/**
  * Start server
- * IMPORTANT: 0.0.0.0 is required for Docker & Kubernetes
  */
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running on port ${PORT}`);

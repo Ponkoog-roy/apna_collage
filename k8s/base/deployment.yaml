@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: myapp
-  namespace: myapp
+
 spec:
   selector:
     matchLabels:
@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: myapp
-        image: ponkoog/myapp3.1:latest
+        image: ponkoog/myapp:4.1
         resources:
           requests:
             memory: "64Mi"
@@ -25,7 +25,27 @@ spec:
         ports:
         - containerPort: 5000
 
+        # Probes Configuration
+        livenessProbe:
+          httpGet:
+            path: /health  # Update path if your app uses a different endpoint (e.g., / or /api/health)
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health  # Update path to your readiness endpoint
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 2
 
         envFrom:
         - configMapRef:
             name: myapp
+        - secretRef:
+            name: myapp-secret
