@@ -4,6 +4,8 @@ metadata:
   name: myingress
   namespace: myapp
 spec:
+  ingressClassName: nginx
+
   rules:
   - host: myapp.local
     http:
