@@ -1,5 +1,5 @@
 const express = require("express");
-const { MongoClient } = require("mongodb");
+const { MongoClient } = require("./app/node_modules/mongodb/mongodb");
 
 const app = express();
 
