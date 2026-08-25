@@ -23,7 +23,10 @@ GitOps (ArgoCD)
 AWS EKS🚀
 
 Branch Strategy
-main
+ main --- Docker file 
+ pro -----k8s file for ECS
+
+
 
 Contains application source code and containerization.
 
