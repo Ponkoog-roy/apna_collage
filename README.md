@@ -23,8 +23,9 @@ GitOps (ArgoCD)
 AWS EKS🚀
 
 Branch Strategy
- main --- Docker file 
- pro -----k8s file for ECS
+ main       ---    Docker file 
+ pro     -----     k8s  file for ECS
+  eke-devops  --   k8 and tarafrom
 
 
 
