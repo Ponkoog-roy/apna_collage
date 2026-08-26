@@ -1,15 +1,17 @@
+# k8s/argocd/dev-application.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
+
 metadata:
   name: myapp-dev
   namespace: argocd
 
 spec:
-  project: default
+  project: apna-project
 
   source:
-    repoURL: https://github.com/<your-user>/<repo>.git
-    targetRevision: main
+    repoURL: https://github.com/Ponkoog-roy/apna_collage.git
+    targetRevision: eks-gitops
     path: k8s/overlays/dev
 
   destination:

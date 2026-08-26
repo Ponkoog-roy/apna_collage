@@ -1,14 +1,15 @@
+# k8s/argocd/project.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: default
+  name: apna-project
   namespace: argocd
 
 spec:
-  description: Default project
+  description: Apna Collage GitOps Project
 
   sourceRepos:
-    - "*"
+    - '*'
 
   destinations:
     - namespace: dev
@@ -17,9 +18,6 @@ spec:
     - namespace: stage
       server: https://kubernetes.default.svc
 
-    - namespace: myapp
-      server: https://kubernetes.default.svc
-
   clusterResourceWhitelist:
-    - group: "*"
-      kind: "*"
+    - group: '*'
+      kind: '*'
