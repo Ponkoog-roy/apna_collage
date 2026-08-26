@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: myapp
-        image: ponkoog/myapp:4.1
+        image: ponkoog/myapp:t43
         resources:
           requests:
             memory: "64Mi"
