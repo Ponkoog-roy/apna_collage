@@ -274,7 +274,3 @@ Cloud Native Technologies
 
 Commit and push it:
 
-```powershell
-git add README.md
-git commit -m "docs: add project README"
-git push
