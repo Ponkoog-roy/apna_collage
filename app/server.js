@@ -5,10 +5,9 @@ const app = express();
 
 /**
  * Environment variables
- * These should come from Docker / Kubernetes
  */
 const PORT = process.env.PORT || 5000;
-const MONGO_URL = process.env.MONGO_URL; // e.g. mongodb://admin:password@mongo-service:27017
+const MONGO_URL = process.env.MONGO_URL;
 const DB_NAME = "apnacollege-db";
 
 /**
@@ -19,69 +18,107 @@ app.use(express.json());
 app.use(express.static("public"));
 
 /**
- * MongoDB Client (single connection per pod)
+ * MongoDB Client
  */
 const client = new MongoClient(MONGO_URL);
+
 let db;
 
 /**
- * Connect to MongoDB (only once)
+ * Connect to MongoDB
  */
 async function connectDB() {
-    if (!db) {
-        await client.connect();
-        db = client.db(DB_NAME);
-        console.log("✅ Connected to MongoDB");
+    try {
+        if (!db) {
+            await client.connect();
+            db = client.db(DB_NAME);
+
+            console.log("✅ Connected to MongoDB Atlas");
+        }
+
+        return db;
+    } catch (err) {
+        console.error("❌ MongoDB Connection Error:", err);
+        throw err;
     }
-    return db;
 }
 
 /**
- * GET all users
+ * Get all users
  */
 app.get("/getUsers", async (req, res) => {
     try {
         const database = await connectDB();
+
         const users = await database
             .collection("users")
             .find({})
             .toArray();
 
         res.status(200).json(users);
+
     } catch (err) {
         console.error("❌ GET /getUsers error:", err);
-        res.status(500).json({ error: "Database error" });
+
+        res.status(500).json({
+            error: "Database error"
+        });
     }
 });
 
 /**
- * POST new user
+ * Add User
  */
 app.post("/addUser", async (req, res) => {
     try {
+        console.log("📥 User received:", req.body);
+
         const database = await connectDB();
+
         const result = await database
             .collection("users")
             .insertOne(req.body);
 
-        res.status(201).json(result);
+        console.log("✅ User inserted:", result.insertedId);
+
+        res.status(201).json({
+            success: true,
+            insertedId: result.insertedId
+        });
+
     } catch (err) {
         console.error("❌ POST /addUser error:", err);
-        res.status(500).json({ error: "Database error" });
+
+        res.status(500).json({
+            success: false,
+            error: err.message
+        });
     }
 });
 
 /**
- * Health Check Endpoint
+ * Health Check
  */
-app.get("/health", (req, res) => {
-    res.status(200).json({
-        status: "UP"
-    });
+app.get("/health", async (req, res) => {
+    try {
+        await connectDB();
+
+        res.status(200).json({
+            status: "UP",
+            database: "CONNECTED"
+        });
+
+    } catch (err) {
+        res.status(500).json({
+            status: "DOWN",
+            database: "DISCONNECTED",
+            error: err.message
+        });
+    }
 });
 
 /**
- * Start server
+ * Start Server
  */
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running on port ${PORT}`);
