@@ -1,4 +1,4 @@
-Absolutely. This is worth documenting because you've now built a complete EKS + ArgoCD + MongoDB Atlas GitOps Platform.
+Built a complete EKS + ArgoCD + MongoDB Atlas GitOps Platform.
 
 EKS GitOps Deployment Runbook
 Final Architecture
